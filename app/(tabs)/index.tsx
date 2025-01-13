@@ -1,9 +1,11 @@
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useState, useRef, useEffect } from "react";
 import { Button, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { sendImageToBackend } from "@/app/services/apiService";
 
 export default function App() {
   const [permission, requestPermission] = useCameraPermissions();
+  const [receiptText, setReceiptText] = useState("");
   const cameraRef = useRef<Camera | null>(null);
 
   useEffect(() => {
@@ -33,16 +35,26 @@ export default function App() {
     );
   }
 
-  const takePictureAsync = async () => {
+  // const takePictureAsync = async () => {
+  //   if (cameraRef.current) {
+  //     try {
+  //       const photo = await cameraRef.current.takePictureAsync();
+  //       console.log("Photo URI:", photo.uri);
+  //     } catch (error) {
+  //       console.error("Error taking picture:", error);
+  //     }
+  //   } else {
+  //     console.log("Camera ref is null");
+  //   }
+  // };
+
+  const captureAndSendImage = async () => {
     if (cameraRef.current) {
-      try {
-        const photo = await cameraRef.current.takePictureAsync();
-        console.log("Photo URI:", photo.uri);
-      } catch (error) {
-        console.error("Error taking picture:", error);
-      }
-    } else {
-      console.log("Camera ref is null");
+      const photo = await cameraRef.current.takePictureAsync();
+      const base64Image = photo.base64; // Convert image to base64
+      const receiptText = await sendImageToBackend(base64Image); // Send image to backend
+      setReceiptText(extractedText);
+      console.log('Processed receipt:', receiptText);
     }
   };
 
@@ -56,9 +68,13 @@ export default function App() {
         onPictureSaved={(photo) => console.log("Saved photo:", photo.uri)}
       />
       <View style={styles.buttonContainer}>
-        <TouchableOpacity onPress={takePictureAsync} style={styles.button}>
+        <TouchableOpacity onPress={captureAndSendImage} style={styles.button}>
           <Text style={styles.text}>Take Picture</Text>
         </TouchableOpacity>
+      </View>
+      <View style={{ padding: 20 }}>
+        <Text style={{ fontSize: 18, fontWeight: 'bold' }}>Extracted Receipt Text:</Text>
+        <Text>{receiptText}</Text>
       </View>
     </View>
   );
