@@ -1,63 +1,60 @@
-import {
-  Camera,
-  CameraType,
-  CameraView,
-  useCameraPermissions,
-} from "expo-camera";
+import { CameraView, useCameraPermissions } from "expo-camera";
 import { useState, useRef, useEffect } from "react";
 import { Button, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import * as FileSystem from "expo-file-system";
-import * as ImagePicker from "expo-image-picker";
 
 export default function App() {
-  const [facing, setFacing] = useState<CameraType>("back");
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<Camera | null>(null);
 
-    useEffect(() => {
-        console.log("Camera ref:", cameraRef.current);
-    }, [cameraRef.current]);
+  useEffect(() => {
+    console.log("Camera ref:", cameraRef.current);
+  }, [cameraRef.current]);
 
-
-    useEffect(() => {
-        if (permission?.granted) {
-            console.log("Camera permissions granted");
-        }
-    }, [permission]);
-
-    if (!permission) {
-        // Camera permissions are still loading.
-        return <View />;
+  useEffect(() => {
+    if (permission?.granted) {
+      console.log("Camera permissions granted");
     }
+  }, [permission]);
 
-    if (!permission.granted) {
-        // Camera permissions are not granted yet.
-        return (
-            <View style={styles.container}>
-                <Text style={styles.message}>
-                    We need your permission to show the camera
-                </Text>
-                <Button onPress={requestPermission} title="Grant Permission" />
-            </View>
-        );
-    }
+  if (!permission) {
+    // Camera permissions are still loading.
+    return <View />;
+  }
+
+  if (!permission.granted) {
+    // Camera permissions are not granted yet.
+    return (
+      <View style={styles.container}>
+        <Text style={styles.message}>
+          We need your permission to show the camera
+        </Text>
+        <Button onPress={requestPermission} title="Grant Permission" />
+      </View>
+    );
+  }
 
   const takePictureAsync = async () => {
     if (cameraRef.current) {
-      const photo = await cameraRef.current.takePictureAsync();
-      console.log("Photo URI:", photo.uri);
+      try {
+        const photo = await cameraRef.current.takePictureAsync();
+        console.log("Photo URI:", photo.uri);
+      } catch (error) {
+        console.error("Error taking picture:", error);
+      }
     } else {
       console.log("Camera ref is null");
     }
   };
 
-  function toggleCameraFacing() {
-    setFacing((current) => (current === "back" ? "front" : "back"));
-  }
-
   return (
     <View style={styles.container}>
-      <CameraView style={styles.camera} facing={facing}></CameraView>
+      <CameraView
+        ref={cameraRef}
+        style={styles.camera}
+        type="back"
+        ratio="16:9"
+        onPictureSaved={(photo) => console.log("Saved photo:", photo.uri)}
+      />
       <View style={styles.buttonContainer}>
         <TouchableOpacity onPress={takePictureAsync} style={styles.button}>
           <Text style={styles.text}>Take Picture</Text>
